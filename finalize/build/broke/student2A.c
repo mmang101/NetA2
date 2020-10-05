@@ -22,7 +22,7 @@ int seq, busy, packets;
 struct node* head;
 struct node* tail;
 struct pkt* inTransit;
-const int TIMERLIFETIME = 10000;
+const int TIMERLIFETIME = 1000000;
 
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
 /*
@@ -55,6 +55,7 @@ void A_output(struct msg message) {
         startTimer(AEntity, TIMERLIFETIME);
         seq = swap(seq);
     } else {
+        
         // Store Message in buffer to be sent when ready
         packets++;
         struct node* bufferedNode = malloc(sizeof(struct node));
@@ -77,9 +78,12 @@ void A_input(struct pkt packet) {
 
     // Check to see if incoming packet is not corrupt and correct ack
     if(packet.acknum == inTransit->acknum && packet.checksum == checksum(packet)){
+        busy = 0; // No longer busy for a brief moment when receiving packets
 
         // Send another buffered message if any available
         if(packets--){
+            busy = 1;
+
             // Make Packet
             head = head->tail;
             inTransit->seqnum=seq;
@@ -91,8 +95,6 @@ void A_input(struct pkt packet) {
             tolayer3(AEntity, *inTransit);
             startTimer(AEntity, TIMERLIFETIME);
             seq = swap(seq);
-        } else if(packets == 0){
-            busy = 0;
         }
     } else {
         busy = 1;
